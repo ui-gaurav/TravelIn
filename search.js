@@ -1,6 +1,3 @@
-const API_KEY = "meqzQmgAFjWToGYAlm3A9pXXYGAGEr6A";
-const API_SECRET = "xdH503AeVoLYYMsD";
-
 async function getAccessToken() {
   const url = "https://test.api.amadeus.com/v1/security/oauth2/token";
   const response = await fetch(url, {

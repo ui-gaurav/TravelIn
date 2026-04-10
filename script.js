@@ -1,6 +1,3 @@
-const API_KEY = "meqzQmgAFjWToGYAlm3A9pXXYGAGEr6A";
-const API_SECRET = "xdH503AeVoLYYMsD";
-
 let cheapestFlight = 0;
 let averageHotel = 0;
 
