@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelIn | Explore World</title>
+    <link rel="icon" type="image/x-icon" href="traveliniconplane.svg">
+    <link rel="stylesheet" href="home.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="logo">TravelIn</div>
+        <nav>
+            <a href="#discover-section">Discover</a>
+            <a href="#features">Features</a>
+            <a href="#about-us">About us</a>
+        </nav>
+        <div class="search-container">
+            <div class="input-wrapper">
+                <input type="text" id="originInput" placeholder="From (e.g. Delhi)" class="search-input"
+                    autocomplete="off">
+                <div id="origin-results" class="autocomplete-items"></div>
+            </div>
+
+            <div class="input-wrapper">
+                <input type="text" id="destInput" placeholder="To (e.g. New York)" class="search-input"
+                    autocomplete="off">
+                <div id="dest-results" class="autocomplete-items"></div>
+            </div>
+
+            <input type="date" id="dateInput" class="search-input">
+            <!-- <button class="search-btn" onclick="handleSearch()">Search</button> -->
+
+             <button class="search-btn" onclick="handleSearch()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+
+    <section class="hero">
+
+        <!-- LEFT SIDE TEXT -->
+        <div class="hero-text">
+            <h1>
+                EXPLORE
+                <span class="inline-elements">
+                    <img src="traveliniconplane.svg" class="mini-round" alt="img1">
+                </span>
+                <br>
+                <span>
+                    <a href="#discover-section" class="exact-shape-button">
+                        <span class="arrow">&rarr;</span>
+                    </a>
+                    WORLD</span>
+            </h1>
+
+            <div class="text-line">
+                <span class="decorated"></span>
+                <p>
+                    Travel is the movement of people between distant geographical locations.
+                    Travel can be done by foot, bicycle.
+                </p>
+            </div>
+
+            <div class="stats">
+                <div>
+                    <h3>10,000+</h3>
+                    <p>Travel places</p>
+                </div>
+                <div>
+                    <h3>Features</h3>
+                    <p>Places people love to visit</p>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="hero-circle">
+            <div class="circle-clip">
+                <div class="circle-container">
+
+                    <svg viewBox="0 0 300 300" class="circle-svg">
+                        <defs>
+                            <path id="circlePath" d="
+              M 150,150
+              m -130,0
+              a 130,130 0 1,1 260,0
+              a 130,130 0 1, 1 -260 , 0
+            " />
+                        </defs>
+                        <text>
+                            <textPath href="#circlePath">
+                                FIND THE BEST PLACE TO TRAVEL AND RELAX YOURSELF
+                            </textPath>
+                        </text>
+                    </svg>
+
+                    <div class="circle-image">
+                        <img src="deckchairs-355596_1280.jpeg" alt="deckchairs">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Discover Section -->
+    <section class="discover" id="discover-section">
+        <h2>Discover the world</h2>
+
+        <div class="cards">
+            <!-- Card 1 -->
+            <div class="card">
+                <img src="istockphoto-2168760082-1024x1024.jpeg">
+                <h4>Dubai </h4>
+                <p>Abu Dhabi, UAE </p>
+                <div class="card-footer">
+                    <span>$240</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="card">
+                <img src="petra jordan.jpeg">
+                <h4>Petra</h4>
+                <p>Jordan</p>
+                <div class="card-footer">
+                    <span>$400</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="card">
+                <img src="Vietnam.jpeg">
+                <h4>Phuket</h4>
+                <p>Thailand</p>
+                <div class="card-footer">
+                    <span>$300</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="card">
+                <img src="Malaysia.jpeg">
+                <h4>Kuala Lumpur</h4>
+                <p>Malaysia</p>
+                <div class="card-footer">
+                    <span>$300</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="card">
+                <img src="indonesia.jpeg">
+                <h4>Bali</h4>
+                <p>Indonesia</p>
+                <div class="card-footer">
+                    <span>$250</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="card">
+                <img src="japan.jpeg">
+                <h4>Kyoto</h4>
+                <p>Japan</p>
+                <div class="card-footer">
+                    <span>$450</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 7 -->
+            <div class="card">
+                <img src="great-wall-of-china-814143_1280.jpeg">
+                <h4>Great Wall of China</h4>
+                <p>China</p>
+                <div class="card-footer">
+                    <span>$450</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="card">
+                <img src="mount-everest-6395758_1280.jpeg">
+                <h4>Mount Everest Base Camp</h4>
+                <p>Nepal</p>
+                <div class="card-footer">
+                    <span>$450</span>
+                    <button>View Details</button>
+                </div>
+            </div>
+    </section>
+
+    <section>
+
+        <section class="features" id="features">
+            <center>
+                <h2>Our Best Features</h2>
+            </center>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>✈ Curated Destinations</h3>
+                    <p>Handpicked travel spots loved by travelers worldwide.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>💰 Affordable Pricing</h3>
+                    <p>Best experiences at prices that don’t hurt your wallet.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🧭 Expert Guidance</h3>
+                    <p>Travel with tips and plans made by travel experts.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📞 24/7 Support</h3>
+                    <p>We’re here anytime you need help on your journey.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="about" id="about-us">
+            <h1>About Us</h1>
+
+            <p class="about-text">
+                TravelIn is a travel platform designed to help people discover
+                beautiful destinations, affordable travel packages, and expert guidance
+                for unforgettable journeys.
+            </p>
+
+            <div class="about-cards">
+                <div class="about-card">
+                    <h3>🌍 Our Mission</h3>
+                    <p>
+                        To make travel simple, affordable, and memorable for everyone.
+                    </p>
+                </div>
+
+                <div class="about-card">
+                    <h3>✈️ What We Offer</h3>
+                    <p>
+                        Handpicked destinations, expert travel tips, and 24/7 support.
+                    </p>
+                </div>
+
+                <div class="about-card">
+                    <h3>🤝 Why Choose Us</h3>
+                    <p>
+                        Trusted guidance, transparent pricing, and personalized experiences.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <h3>TravelIn</h3>
+
+                <p class="footer-desc">
+                    TravelIn is a travel-inspired project created for learning and
+                    demonstration purposes only.
+                </p>
+
+                <div class="footer-links">
+                    <a href="#about-us">About Us</a>
+                    <a href="#features">Features</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms</a>
+                </div>
+
+                <p class="footer-disclaimer">
+                    © 2026 TravelIn. All rights reserved.
+                    Images and content used belong to their respective owners and are used for
+                    educational purposes only.
+                </p>
+            </div>
+        </footer>
+    </section>
+    <script src="search.js"></script>
+</body>
+
+</html>

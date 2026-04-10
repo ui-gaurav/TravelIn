@@ -1,0 +1,5 @@
+@token = NOLQiggzzRAUnosoh2yXviE4gTTP
+
+### This v2 endpoint is much more reliable
+GET https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=MAD&destinationLocationCode=PAR&departureDate=2026-06-01&adults=1&max=5
+Authorization: Bearer {{token}}
