@@ -1,0 +1,13 @@
+# API keys / secrets
+config.js
+
+# System files
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
