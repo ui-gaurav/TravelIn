@@ -79,11 +79,10 @@ async function getDestinationPhoto(query, width = 800) {
     console.info("[Unsplash] API blocked (likely localhost), using source.unsplash.com");
   }
 
-  // ── Strategy 2: source.unsplash.com (no CORS, no API key needed) ──
-  const h          = Math.round(width * 0.65);
-  const sourceUrl  = `https://source.unsplash.com/${width}x${h}/?${encodeURIComponent(query)}`;
-  _unsplashCache.set(cacheKey, sourceUrl);
-  return sourceUrl;
+  // ── Strategy 2: Global Fallback (source.unsplash.com is discontinued) ──
+  const fallbackUrl = "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1400&auto=format&fit=crop";
+  _unsplashCache.set(cacheKey, fallbackUrl);
+  return fallbackUrl;
 }
 
 // ── Shared Sky Scrapper fetch helper ──────────────────────

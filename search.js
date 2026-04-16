@@ -259,8 +259,13 @@ function handleSearch() {
   }
 
   // Extract just the sky ID from "DEL — New Delhi" format or plain text
-  const origin = (document.getElementById("originSkyId").value || originVal.split(" ")[0]).toUpperCase();
-  const dest   = (document.getElementById("destSkyId").value   || destVal.split(" ")[0]).toUpperCase();
+  const originMatch = originVal.split(" ");
+  const origin = (document.getElementById("originSkyId").value || originMatch[0]).toUpperCase();
+  const originName = originVal.includes("—") ? originVal.split("—")[1].trim() : origin;
+
+  const destMatch = destVal.split(" ");
+  const dest   = (document.getElementById("destSkyId").value   || destMatch[0]).toUpperCase();
+  const destName = destVal.includes("—") ? destVal.split("—")[1].trim() : dest;
 
   const originEntityId    = document.getElementById("originEntityId").value    || "";
   const originSkyId       = document.getElementById("originSkyId").value       || origin;
@@ -269,7 +274,7 @@ function handleSearch() {
   const destHotelEntityId = document.getElementById("destHotelEntityId").value || "";
 
   const params = new URLSearchParams({
-    origin, dest, date,
+    origin, originName, dest, destName, date,
     originSkyId, originEntityId,
     destSkyId,   destEntityId,
     destHotelEntityId,

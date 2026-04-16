@@ -243,6 +243,9 @@ window.onload = async function () {
   const passengers = parseInt(getQueryParam("passengers") || "1", 10);
   const tripType   = getQueryParam("tripType") || "one-way";
 
+  const originName = getQueryParam("originName") || origin;
+  const destName   = getQueryParam("destName") || dest;
+
   let originSkyId       = getQueryParam("originSkyId")       || origin;
   let originEntityId    = getQueryParam("originEntityId")     || "";
   let destSkyId         = getQueryParam("destSkyId")         || dest;
@@ -252,11 +255,11 @@ window.onload = async function () {
   // Section titles
   const flightTitle = document.getElementById("flight-section");
   const hotelTitle  = document.getElementById("hotel-section");
-  if (flightTitle) flightTitle.textContent = `✈️ Flights: ${origin} → ${dest}`;
-  if (hotelTitle)  hotelTitle.textContent  = `🏨 Hotels in ${dest}`;
+  if (flightTitle) flightTitle.textContent = `✈️ Flights: ${originName} → ${destName}`;
+  if (hotelTitle)  hotelTitle.textContent  = `🏨 Hotels in ${destName}`;
 
   // Map sky code to city name for display
-  const cityName = destSkyId === dest ? dest : (destSkyId || dest);
+  const cityName = destName;
 
   // Destination hero
   renderDestHero(cityName, origin, dest, date, passengers, tripType);
