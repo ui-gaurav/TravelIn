@@ -1,300 +1,569 @@
+// ============================================================
+// TravelIn - Results Page  (Sky Scrapper / RapidAPI)
+// ============================================================
+// Features:
+//  • Outbound + Return (round-trip) flight fetching
+//  • Price calendar strip (7-day cheapest fares)
+//  • Destination hero banner via Unsplash
+//  • Hotel images via Unsplash fallback
+//  • Shimmer skeleton loaders
+//  • Multi-currency trip total
+//  • "Book on Google Flights" links
+//  • Shareable URL
+// ============================================================
+
 let cheapestFlight = 0;
-let averageHotel = 0;
+let averageHotel   = 0;
 
-// 1. TOKEN FETCHING — delegates to the shared AmadeusToken manager in config.js
-// AmadeusToken caches and auto-refreshes the token every ~29 minutes.
-async function getAccessToken() {
-  return AmadeusToken.get();
+// ── URL param helper ─────────────────────────────────────────
+function getQueryParam(p) {
+  return new URLSearchParams(window.location.search).get(p);
 }
 
-// 2. HELPER TO GET URL DATA
-function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
-}
-
-// 3. PAGE INITIALIZATION
-window.onload = async function () {
-  const origin = getQueryParam("origin");
-  const dest = getQueryParam("dest");
-  const date = getQueryParam("date");
-  // destCity is the Amadeus city code (e.g. LON for LHR, NYC for JFK)
-  // Falls back to dest (airport code) if not provided
-  const destCity = getQueryParam("destCity") || dest;
-
-  // Update page titles to show the route
-  if (origin && dest) {
-    const flightTitle = document.getElementById("flight-section");
-    const hotelTitle = document.getElementById("hotel-section");
-    if (flightTitle) flightTitle.textContent = `✈️ Flights: ${origin} → ${dest}`;
-    if (hotelTitle) hotelTitle.textContent = `🏨 Stays in ${dest} (${destCity})`;
-  }
-
-  if (origin && dest && date) {
-    fetchFlightData(origin, dest, date);
-    fetchHotels(destCity);
-  } else {
-    const fc = document.getElementById("flight-results-container");
-    const hc = document.getElementById("hotel-results-container");
-    if (fc) fc.innerHTML = `<div class="no-results"><p>No search parameters found. <a href="home.html">← Go back</a></p></div>`;
-    if (hc) hc.innerHTML = "";
-  }
-};
-
-// 4. TOTAL CALCULATOR LOGIC
-// 1. Define an exchange rate (Current approx: 1 USD = 83 INR)
-const USD_TO_INR = 90.58;
+// ── Currency conversion ──────────────────────────────────────
+const RATES   = { USD: 1, INR: 90.58, EUR: 0.93, GBP: 0.79 };
+const SYMBOLS = { USD: "$", INR: "₹", EUR: "€", GBP: "£" };
 
 function updateTripTotal() {
+  const currencyEl = document.getElementById("currency-choice");
   const summaryBar = document.getElementById("trip-summary");
-  const currency = document.getElementById("currency-choice").value;
+  if (!currencyEl || !summaryBar) return;
 
-  // Calculate based on the rate
-  const rate = currency === "INR" ? USD_TO_INR : 1;
-  const symbol = currency === "INR" ? "₹" : "$";
-
-  const convertedFlight = cheapestFlight * rate;
-  const convertedHotel = averageHotel * rate;
-  const total = convertedFlight + convertedHotel;
-
-  if (cheapestFlight > 0) {
+  const currency = currencyEl.value;
+  const rate     = RATES[currency]   || 1;
+  const symbol   = SYMBOLS[currency] || "$";
+  
+  if (cheapestFlight > 0 && summaryBar) {
+    const fAmt     = cheapestFlight * rate;
+    const hAmt     = averageHotel   * rate;
     summaryBar.style.display = "flex";
-    document.getElementById("min-flight-price").innerText =
-      `${symbol}${convertedFlight.toFixed(2)}`;
-    document.getElementById("avg-hotel-price").innerText =
-      averageHotel > 0 ? `${symbol}${convertedHotel.toFixed(2)}` : "N/A";
-    document.getElementById("total-trip-cost").innerText =
-      `${symbol}${total.toFixed(2)}`;
+    document.getElementById("min-flight-price").innerText = `${symbol}${fAmt.toFixed(0)}`;
+    document.getElementById("avg-hotel-price").innerText  = averageHotel > 0 ? `${symbol}${hAmt.toFixed(0)}` : "N/A";
+    document.getElementById("total-trip-cost").innerText  = `${symbol}${(fAmt + hAmt).toFixed(0)}`;
+  }
+
+  // Update all flight and hotel cards globally
+  document.querySelectorAll('.price-tag').forEach(tag => {
+     const usd = tag.getAttribute('data-usd');
+     if (usd && parseFloat(usd) > 0) {
+       const converted = (parseFloat(usd) * rate).toFixed(0);
+       const sub = tag.innerHTML.includes('/night') ? '<sub>/night</sub>' : '<sub>/person</sub>';
+       tag.innerHTML = `${symbol}${converted}${sub}`;
+     }
+  });
+
+  // Price calendar strips globally
+  document.querySelectorAll('.cal-price').forEach(tag => {
+     const usd = tag.getAttribute('data-usd');
+     if (usd) tag.innerHTML = `${symbol}${(parseFloat(usd) * rate).toFixed(0)}`;
+  });
+}
+
+// ── Share trip link ──────────────────────────────────────────
+function shareTrip() {
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showResultToast("🔗 Link copied!"));
+  } else {
+    prompt("Copy this link:", url);
   }
 }
 
-// 5. FETCH FLIGHT DATA
-async function fetchFlightData(origin, dest, date) {
-  const container = document.getElementById("flight-results-container");
-  container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Finding flights to ${dest}...</p></div>`;
+function showResultToast(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:"fixed", bottom:"30px", left:"50%", transform:"translateX(-50%)",
+    background:"#003580", color:"#fff", padding:"12px 28px", borderRadius:"30px",
+    fontFamily:"'Poppins',sans-serif", fontWeight:"600", fontSize:"0.9rem",
+    zIndex:"99999", boxShadow:"0 8px 24px rgba(0,0,0,0.25)"
+  });
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Skeleton loaders ─────────────────────────────────────────
+function renderSkeletons(containerId, count = 3) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="loading-container">${
+    Array(count).fill(`<div class="skeleton skeleton-card-full"></div>`).join("")
+  }</div>`;
+}
+
+// ── Resolve entity IDs ───────────────────────────────────────
+async function resolveEntityId(query) {
+  try {
+    const res  = await skyScrapper("/api/v1/flights/searchAirport", { query, locale: "en-US" });
+    const json = await res.json();
+    if (json.status && json.data?.length > 0) {
+      const item = json.data[0];
+      return {
+        skyId:         item.navigation?.relevantFlightParams?.skyId    || item.skyId,
+        entityId:      item.navigation?.relevantFlightParams?.entityId || item.entityId,
+        hotelEntityId: item.navigation?.relevantHotelParams?.entityId  || item.entityId,
+      };
+    }
+  } catch (e) {
+    console.warn("[resolveEntityId] failed:", e.message);
+  }
+  return { skyId: query, entityId: null, hotelEntityId: null };
+}
+
+// ── Destination Hero Banner ───────────────────────────────────
+async function renderDestHero(cityName, origin, dest, date, passengers, tripType) {
+  const hero    = document.getElementById("dest-hero");
+  const content = document.getElementById("dest-hero-content");
+  const badge   = document.getElementById("route-badge");
+  if (!hero || !content) return;
+
+  // Route badge
+  const paxLabel = passengers > 1 ? `${passengers} Pax` : "1 Pax";
+  const rtLabel  = tripType === "round-trip" ? "Round-trip" : "One-way";
+  if (badge) badge.textContent = `${origin} → ${dest} · ${formatDisplayDate(date)} · ${paxLabel} · ${rtLabel}`;
+
+  content.innerHTML = `
+    <h2>${cityName}</h2>
+    <p>✈️ ${origin} → ${dest} &nbsp;|&nbsp; 📅 ${formatDisplayDate(date)} &nbsp;|&nbsp; 👤 ${paxLabel}</p>
+    <div id="weather-badge" style="margin-top:12px; font-weight:500; font-size:0.95rem; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:rgba(0,0,0,0.6); border-radius:30px; backdrop-filter:blur(6px); color:#fff; border:1px solid rgba(255,255,255,0.2);">Fetching weather... ⛅</div>
+  `;
+
+  // Fetch Weather asynchronously
+  fetchWeather(cityName).then(data => {
+    const targetDate = new Date(date).toISOString().split('T')[0];
+    const forecasts = data.list || [];
+    
+    // Find closest forecast for the selected date (defaulting to 12:00 PM if possible)
+    let matched = forecasts.find(f => f.dt_txt.startsWith(targetDate) && f.dt_txt.includes("12:00"));
+    if (!matched) matched = forecasts.find(f => f.dt_txt.startsWith(targetDate));
+    
+    // If date is too far (>5 days), fall back to the very first available forecast (current)
+    if (!matched) matched = forecasts[0];
+
+    if (matched) {
+       const icon = matched.weather[0].icon;
+       const condition = matched.weather[0].main;
+       const temp = Math.round(matched.main.temp);
+       const isExactDate = matched.dt_txt.startsWith(targetDate);
+       const datePrefix = isExactDate ? "" : "Current: ";
+       
+       document.getElementById("weather-badge").innerHTML = `
+         <img src="https://openweathermap.org/img/wn/${icon}.png" style="width:24px;height:24px;margin-left:-6px;" alt="${condition}">
+         <span>${datePrefix}${temp}°C, ${condition}</span>
+       `;
+    }
+  }).catch(e => {
+     document.getElementById("weather-badge").style.display = "none";
+     console.error("Weather error:", e);
+  });
+
+  // Load Unsplash photo as hero background
+  const photoUrl = await getDestinationPhoto(`${cityName} travel landmark`, 1400);
+  if (photoUrl) {
+    const img    = document.createElement("img");
+    img.src      = photoUrl;
+    img.alt      = cityName;
+    img.className = "dest-bg";
+    img.loading  = "lazy";
+    img.onload   = () => img.classList.add("loaded");
+    hero.prepend(img);
+  }
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" });
+}
+
+// ── Price Calendar Strip ──────────────────────────────────────
+async function renderPriceCalendar(originSkyId, originEntityId, destSkyId, destEntityId, activeDate) {
+  const section = document.getElementById("price-calendar-section");
+  const strip   = document.getElementById("price-calendar-strip");
+  if (!section || !strip) return;
 
   try {
-    const token = await getAccessToken();
-    const url = `https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${origin}&destinationLocationCode=${dest}&departureDate=${date}&adults=1&max=10`;
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await skyScrapper("/api/v1/flights/getPriceCalendar", {
+      originSkyId, destinationSkyId: destSkyId,
+      originEntityId, destinationEntityId: destEntityId,
+      currency: "USD",
     });
-    const jsonData = await response.json();
+    if (!res.ok) return;
+    const json = await res.json();
+    const days = json.data?.flights?.days;
+    if (!days || days.length === 0) return;
 
-    // Check for API-level errors (e.g. invalid airport code)
-    if (jsonData.errors) {
-      const errMsg = jsonData.errors[0]?.detail || "Invalid request parameters.";
-      throw new Error(errMsg);
+    // Show 7 days around the selected date
+    const activeDateObj  = new Date(activeDate);
+    const nearbyDays     = days
+      .filter(d => {
+        const diff = Math.abs(new Date(d.day) - activeDateObj) / 86400000;
+        return diff <= 7;
+      })
+      .sort((a, b) => new Date(a.day) - new Date(b.day))
+      .slice(0, 10);
+
+    if (!nearbyDays.length) return;
+
+    const minPrice = Math.min(...nearbyDays.map(d => d.price));
+
+    strip.innerHTML = nearbyDays.map(d => {
+      const isActive   = d.day === activeDate;
+      const isCheapest = d.price === minPrice;
+      const label      = new Date(d.day + "T00:00:00")
+        .toLocaleDateString("en-GB", { weekday:"short", day:"numeric", month:"short" });
+      return `
+        <div class="cal-day${isActive ? " active" : ""}" onclick="navigateToDate('${d.day}')">
+          <span class="cal-date">${label}</span>
+          <span class="cal-price${isCheapest ? " cheapest" : ""}" data-usd="${Math.round(d.price)}">$${Math.round(d.price)}</span>
+        </div>`;
+    }).join("");
+
+    section.style.display = "block";
+  } catch (e) {
+    console.warn("[price-calendar] failed:", e.message);
+  }
+}
+
+function navigateToDate(newDate) {
+  const params = new URLSearchParams(window.location.search);
+  params.set("date", newDate);
+  window.location.search = params.toString();
+}
+
+// ════════════════════════════════════════════════════════════════
+// PAGE INIT
+// ════════════════════════════════════════════════════════════════
+
+window.onload = async function () {
+  const origin     = getQueryParam("origin");
+  const dest       = getQueryParam("dest");
+  const date       = getQueryParam("date");
+  const returnDate = getQueryParam("returnDate") || "";
+  const passengers = parseInt(getQueryParam("passengers") || "1", 10);
+  const tripType   = getQueryParam("tripType") || "one-way";
+
+  let originSkyId       = getQueryParam("originSkyId")       || origin;
+  let originEntityId    = getQueryParam("originEntityId")     || "";
+  let destSkyId         = getQueryParam("destSkyId")         || dest;
+  let destEntityId      = getQueryParam("destEntityId")       || "";
+  let destHotelEntityId = getQueryParam("destHotelEntityId") || "";
+
+  // Section titles
+  const flightTitle = document.getElementById("flight-section");
+  const hotelTitle  = document.getElementById("hotel-section");
+  if (flightTitle) flightTitle.textContent = `✈️ Flights: ${origin} → ${dest}`;
+  if (hotelTitle)  hotelTitle.textContent  = `🏨 Hotels in ${dest}`;
+
+  // Map sky code to city name for display
+  const cityName = destSkyId === dest ? dest : (destSkyId || dest);
+
+  // Destination hero
+  renderDestHero(cityName, origin, dest, date, passengers, tripType);
+
+  if (!origin || !dest || !date) {
+    document.getElementById("flight-results-container").innerHTML =
+      `<div class="no-results"><p>No search parameters. <a href="home.html">← Go back</a></p></div>`;
+    return;
+  }
+
+  // Show skeletons
+  renderSkeletons("flight-results-container", 3);
+  renderSkeletons("hotel-results-container", 3);
+
+  // Resolve entity IDs if missing
+  if (!originEntityId || !destEntityId) {
+    const [oData, dData] = await Promise.all([
+      !originEntityId ? resolveEntityId(origin) : Promise.resolve({ skyId: originSkyId, entityId: originEntityId }),
+      !destEntityId   ? resolveEntityId(dest)   : Promise.resolve({ skyId: destSkyId, entityId: destEntityId, hotelEntityId: destHotelEntityId }),
+    ]);
+    if (!originEntityId) { originSkyId = oData.skyId; originEntityId = oData.entityId; }
+    if (!destEntityId)   { destSkyId   = dData.skyId; destEntityId   = dData.entityId; destHotelEntityId = dData.hotelEntityId || dData.entityId; }
+  }
+
+  // Price calendar
+  renderPriceCalendar(originSkyId, originEntityId, destSkyId, destEntityId, date);
+
+  // Round-trip: show return section
+  if (tripType === "round-trip" && returnDate) {
+    const returnSection = document.getElementById("return-flight-section");
+    if (returnSection) {
+      returnSection.style.display = "block";
+      const rTitle = returnSection.querySelector("h2");
+      if (rTitle) rTitle.textContent = `↩️ Return Flights: ${dest} → ${origin}`;
+      renderSkeletons("return-flight-results-container", 3);
     }
+  }
 
-    if (!jsonData.data || jsonData.data.length === 0) {
+  // Parallel data fetching
+  const fetches = [
+    fetchFlightData(originSkyId, originEntityId, destSkyId, destEntityId, date, passengers),
+    fetchHotels(destHotelEntityId || destEntityId, dest, date, cityName),
+  ];
+
+  if (tripType === "round-trip" && returnDate) {
+    fetches.push(
+      fetchFlightData(destSkyId, destEntityId, originSkyId, originEntityId, returnDate, passengers, true)
+    );
+  }
+
+  await Promise.all(fetches);
+};
+
+// ════════════════════════════════════════════════════════════════
+// 1. FETCH FLIGHTS
+// ════════════════════════════════════════════════════════════════
+async function fetchFlightData(originSkyId, originEntityId, destSkyId, destEntityId, date, passengers = 1, isReturn = false) {
+  const containerId = isReturn ? "return-flight-results-container" : "flight-results-container";
+  const container   = document.getElementById(containerId);
+  if (!container) return;
+
+  try {
+    const res = await serpApiFetch("google_flights", {
+      departure_id: originSkyId,
+      arrival_id: destSkyId,
+      outbound_date: date,
+      type: "2", // 2 = One-way (since we fetch outbound and return separately)
+      currency: "USD",
+      hl: "en",
+      adults: String(passengers)
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
+    const data = json.best_flights || json.other_flights;
+    if (!data || data.length === 0) {
       container.innerHTML = `
         <div class="no-results">
           <h3>✈️ No flights found for this route.</h3>
-          <p style="color:#777;font-size:0.9rem;">Try a different date or check the airport codes are valid (e.g. DEL, LHR, JFK).</p>
+          <p>Try a future date or different airport codes.</p>
           <a href="home.html">← Change Search</a>
         </div>`;
       return;
     }
 
-    // Sort and Capture Cheapest Flight
-    const sortedData = jsonData.data.sort(
-      (a, b) => parseFloat(a.price.total) - parseFloat(b.price.total),
-    );
-    cheapestFlight = parseFloat(sortedData[0].price.total);
-    updateTripTotal();
+    const itineraries = data.map(offer => {
+      const flightLegs = offer.flights || [];
+      const first = flightLegs[0] || {};
+      const last = flightLegs[flightLegs.length - 1] || {};
+      
+      const priceRaw = offer.price || 0;
+      
+      return {
+        price: { raw: priceRaw, formatted: `$${priceRaw}` },
+        legs: [{
+          carriers: { marketing: [{ name: offer.airline || first.airline || "Airline", logoUrl: offer.airline_logo }] },
+          origin: { displayCode: first.departure_airport?.id || originSkyId },
+          destination: { displayCode: last.arrival_airport?.id || destSkyId },
+          stopCount: flightLegs.length > 0 ? flightLegs.length - 1 : 0,
+          durationInMinutes: offer.total_duration || offer.duration || 0,
+          departure: first.departure_airport?.time,
+          arrival: last.arrival_airport?.time
+        }]
+      };
+    });
 
-    renderFlightCards(sortedData, jsonData.dictionaries.carriers);
-  } catch (error) {
-    console.error("Flight fetch error:", error);
-    // On auth errors, clear the token so next request will re-authenticate
-    if (error.message && error.message.includes("401")) AmadeusToken.clear();
+    const sorted = itineraries.sort((a, b) => a.price.raw - b.price.raw);
+    if (!isReturn) {
+      cheapestFlight = sorted[0].price.raw;
+      updateTripTotal();
+    }
+
+    renderFlightCards(sorted.slice(0, 10), containerId, destSkyId, destEntityId, originSkyId, originEntityId, date);
+
+  } catch (err) {
+    console.error("[flight] Error:", err);
     container.innerHTML = `
-      <div class="no-results" style="text-align:center;padding:40px;">
+      <div class="no-results">
         <h3 style="color:#e74c3c;">⚠️ Flight search failed</h3>
-        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
-        <a href="home.html" style="color:#ff7f00;font-weight:600;">← Try again</a>
+        <p>${err.message}</p>
+        <a href="home.html" style="color:#FF7300;font-weight:600;">← Try again</a>
+        <br><button class="retry-btn" onclick="location.reload()">🔄 Retry</button>
       </div>`;
   }
 }
 
-// 6. FETCH HOTEL DATA
-async function fetchHotels(cityCode) {
+
+// ════════════════════════════════════════════════════════════════
+// 2. FETCH HOTELS
+// ════════════════════════════════════════════════════════════════
+async function fetchHotels(hotelEntityId, cityName, checkinDate, displayCity) {
   const container = document.getElementById("hotel-results-container");
-  container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Searching for stays in ${cityCode}...</p></div>`;
+  if (!container) return;
+
+  const checkout = (() => {
+    const d = new Date(checkinDate);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  })();
+
+  // Use "Airport" suffix exclusively so Google Hotels centres precisely on the destination city instead of matching random states (e.g., DEL = Delaware)
+  const destCity = `${getQueryParam("dest")} Airport`;
 
   try {
-    const token = await getAccessToken();
-    // Use city IATA code (e.g. LON for London, NYC for New York)
-    const url = `https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode=${cityCode}&radius=5&radiusUnit=KM&hotelSource=ALL`;
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await serpApiFetch("google_hotels", {
+      q: destCity,
+      check_in_date: checkinDate,
+      check_out_date: checkout,
+      currency: "USD",
+      hl: "en",
+      adults: "1"
     });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const errMsg = errData.errors?.[0]?.detail || `HTTP ${response.status}`;
-      throw new Error(errMsg);
-    }
-
-    const jsonData = await response.json();
-
-    if (!jsonData.data || jsonData.data.length === 0) {
+    
+    if (!res.ok) throw new Error("Could not find hotels for this city.");
+    
+    const json = await res.json();
+    const hotelList = json.properties || [];
+    
+    if (hotelList.length === 0) {
       container.innerHTML = `
-        <div class="no-results" style="text-align:center;padding:40px;">
-          <p style="font-size:1rem;color:#555;">No hotels found for city code <b>${cityCode}</b>.</p>
-          <p style="font-size:0.85rem;color:#999;">Try a major city like NYC, LON, PAR or DXB.</p>
+        <div class="no-results">
+          <p>No hotels found for <b>${destCity}</b>.</p>
+          <p style="font-size:.85rem;color:#999;">Try a nearby major city.</p>
         </div>`;
       return;
     }
 
-    // Amadeus test API doesn't return live prices for city-wide listing
-    // Use a simulated average price for the trip calculator
-    averageHotel = 150.0;
-    updateTripTotal();
+    const hotels = hotelList.slice(0, 9).map(h => {
+       const amount = h.rate_per_night?.extracted_lowest || h.total_rate?.extracted_lowest || 0;
+       const formatted = h.rate_per_night?.lowest || h.total_rate?.lowest || "Call for rates";
+       return {
+         name: h.name,
+         stars: h.extracted_hotel_class || 4,
+         price: { lead: { amount, formatted } },
+         images: h.images?.map(img => img.original_image || img.thumbnail) || [],
+         reviewScore: h.overall_rating ? h.overall_rating.toFixed(1) : undefined,
+         reviewCount: h.reviews || 0
+       };
+    }).filter(h => h.price.lead.amount > 0);
 
-    renderHotelCards(jsonData.data);
-  } catch (error) {
-    console.error("Hotel fetch error:", error);
+    if (hotels.length) {
+      const prices = hotels.map(h => h.price.lead.amount);
+      averageHotel = prices.reduce((a, b) => a + b, 0) / prices.length;
+      updateTripTotal();
+    }
+
+    renderHotelCards(hotels, destCity);
+
+  } catch (err) {
+    console.error("[hotels] Error:", err);
     container.innerHTML = `
-      <div class="no-results" style="text-align:center;padding:40px;">
+      <div class="no-results">
         <h3 style="color:#e74c3c;">⚠️ Hotel data unavailable</h3>
-        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
-        <p style="color:#999;font-size:0.8rem;">The Amadeus test environment has limited city coverage.<br>Try major city codes: NYC, LON, PAR, DXB, SIN.</p>
+        <p>${err.message}</p>
+        <button class="retry-btn" onclick="location.reload()">🔄 Retry</button>
       </div>`;
   }
 }
 
-// 7. RENDER FUNCTIONS
-function renderFlightCards(data, carriers) {
-  const container = document.getElementById("flight-results-container");
-  container.innerHTML = data
-    .map((flight) => {
-      const airlineCode = flight.validatingAirlineCodes[0];
-      const airlineName = carriers[airlineCode] || "Airline";
-      const itinerary = flight.itineraries[0];
-      const depTime = new Date(
-        itinerary.segments[0].departure.at,
-      ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-      return `
-      <div class="flight-card">
-        <div class="card-body">
-          <h3 class="airline-name">${airlineName}</h3>
-          <p class="route-subtitle">${itinerary.segments[0].departure.iataCode} ✈️ ${itinerary.segments[itinerary.segments.length - 1].arrival.iataCode}</p>
-          <div class="flight-info-row">
-            <span>Departure: <b>${depTime}</b></span>
-            <span class="duration-pill">⏱ ${itinerary.duration.replace("PT", "").toLowerCase()}</span>
-          </div>
-          <div class="card-footer-row">
-            <span class="price-tag">$${flight.price.total}</span>
-            <button class="action-btn">Select Flight</button>
-          </div>
-        </div>
-      </div>`;
-    })
-    .join("");
-}
 
-function renderHotelCards(hotels) {
-  const container = document.getElementById("hotel-results-container");
-  container.innerHTML = hotels
-    .slice(0, 6)
-    .map(
-      (hotel) => `
+// ════════════════════════════════════════════════════════════════
+// 3. RENDER — Flight Cards
+// ════════════════════════════════════════════════════════════════
+function renderFlightCards(itineraries, containerId, destSkyId, destEntityId, originSkyId, originEntityId, date) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = itineraries.map(flight => {
+    const leg      = flight.legs?.[0];
+    if (!leg) return "";
+
+    const airline  = leg.carriers?.marketing?.[0]?.name    || "Airline";
+    const logo     = leg.carriers?.marketing?.[0]?.logoUrl || "";
+    const origin   = leg.origin?.displayCode               || "–";
+    const dest     = leg.destination?.displayCode          || "–";
+    const stopCount = leg.stopCount || 0;
+    const stopsLabel = stopCount === 0 ? "Direct" : `${stopCount} stop${stopCount > 1 ? "s" : ""}`;
+    const isDirect = stopCount === 0;
+
+    const durMin   = leg.durationInMinutes || 0;
+    const duration = `${Math.floor(durMin / 60)}h ${durMin % 60}m`;
+    const depTime  = leg.departure ? new Date(leg.departure).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "–";
+    const arrTime  = leg.arrival   ? new Date(leg.arrival).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "–";
+    const price    = flight.price?.formatted || `$${(flight.price?.raw || 0).toFixed(0)}`;
+    const priceRaw = flight.price?.raw || 0;
+
+    // Google Flights deep link
+    const gFlightsUrl = `https://www.google.com/travel/flights/search?tfs=CBwQAhoeEgoyMDI2LTA0LTE2agwIAhIIL20vMDJtNzNyDAgCEggvbS8wMm03Mw`;
+
+    return `
     <div class="flight-card">
       <div class="card-body">
-        <h3 class="airline-name">🏨 ${hotel.name}</h3>
-        <p class="route-subtitle">ID: ${hotel.hotelId}</p>
-        <div class="flight-info-row">
-          <span>Cleanliness: <b>High</b></span>
-          <span class="duration-pill">Verified</span>
+        <div class="airline-logo-row">
+          ${logo ? `<img src="${logo}" alt="${airline}" class="airline-logo">` : ""}
+          <h3 class="airline-name">${airline}</h3>
+          <span class="stops-badge${isDirect ? " direct" : ""}">${stopsLabel}</span>
         </div>
-        <div class="card-footer-row">
-          <span class="price-tag">Best Rate</span>
-<button class="action-btn" onclick="fetchHotelOffers('${hotel.hotelId}')">View Rooms</button>
+
+        <div class="flight-timeline">
+          <div class="time-block">
+            <span class="time">${depTime}</span>
+            <span class="code">${origin}</span>
+          </div>
+          <div class="timeline-line">
+            <span class="duration-label">${duration}</span>
+            <div class="timeline-track"></div>
+            <span class="stops-label">${stopsLabel}</span>
+          </div>
+          <div class="time-block">
+            <span class="time">${arrTime}</span>
+            <span class="code">${dest}</span>
+          </div>
         </div>
       </div>
-    </div>`,
-    )
-    .join("");
+
+      <div class="card-footer-row">
+        <span class="price-tag" data-usd="${priceRaw}">${price}<sub>/person</sub></span>
+        <a class="action-btn" href="${gFlightsUrl}" target="_blank" rel="noopener">Book Flight ↗</a>
+      </div>
+    </div>`;
+  }).join("");
 }
 
-// Function to fetch specific room offers and prices
-async function fetchHotelOffers(hotelId) {
+// ════════════════════════════════════════════════════════════════
+// 4. RENDER — Hotel Cards (with Unsplash fallback)
+// ════════════════════════════════════════════════════════════════
+async function renderHotelCards(hotels, cityName) {
   const container = document.getElementById("hotel-results-container");
-  container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Fetching real-time prices for ${hotelId}...</p></div>`;
+  if (!container) return;
 
-  try {
-    const token = await getAccessToken();
-    // The v3 endpoint for specific hotel pricing
-    const url = `https://test.api.amadeus.com/v3/shopping/hotel-offers?hotelIds=${hotelId}&adults=1&bestRateOnly=true`;
+  // Fetch Unsplash fallback images for hotels that have no API image
+  const hotelImages = await Promise.all(hotels.map(async (hotel) => {
+    const apiImg = hotel.images?.[0]?.url;
+    if (apiImg) return apiImg;
+    return await getDestinationPhoto(`${hotel.name} ${cityName} hotel`, 600);
+  }));
 
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const jsonData = await response.json();
+  container.innerHTML = hotels.map((hotel, i) => {
+    const name      = hotel.name    || "Hotel";
+    const starCount = Math.min(hotel.stars || 0, 5);
+    const stars     = "★".repeat(starCount) + "☆".repeat(5 - starCount);
+    const score     = hotel.reviewScore ? `${hotel.reviewScore}/10` : "";
+    const reviews   = hotel.reviewCount ? `(${hotel.reviewCount.toLocaleString()} reviews)` : "";
+    const price     = hotel.price?.lead?.formatted
+                   || (hotel.price?.lead?.amount ? `$${hotel.price.lead.amount.toFixed(0)}` : "Call for rates");
+    const imgUrl    = hotelImages[i] || "";
 
-    // Check for API-level error response
-    if (jsonData.errors) {
-      const errMsg = jsonData.errors[0]?.detail || "This hotel has no available offers.";
-      throw new Error(errMsg);
-    }
-
-    if (!jsonData.data || jsonData.data.length === 0) {
-      container.innerHTML = `
-        <div class="no-results" style="text-align:center;padding:40px;">
-          <h3>🏨 No rooms available right now</h3>
-          <p style="color:#777;font-size:0.9rem;">This hotel has no live offers in the test environment.<br>Try another hotel from the list.</p>
-          <button class="action-btn" onclick="fetchHotels(getQueryParam('destCity') || getQueryParam('dest'))" style="margin-top:15px;">← Back to Hotels</button>
-        </div>`;
-      return;
-    }
-
-    renderOfferCards(jsonData.data[0]); // Amadeus returns offers inside a hotel object
-  } catch (error) {
-    console.error("Offer Error:", error);
-    container.innerHTML = `
-      <div class="no-results" style="text-align:center;padding:40px;">
-        <h3 style="color:#e74c3c;">⚠️ Room pricing unavailable</h3>
-        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
-        <button class="action-btn" onclick="fetchHotels(getQueryParam('destCity') || getQueryParam('dest'))" style="margin-top:15px;">← Back to Hotels</button>
-      </div>`;
-  }
-}
-
-function renderOfferCards(hotelData) {
-  const container = document.getElementById("hotel-results-container");
-  const offers = hotelData.offers || [];
-  const hotelName = hotelData.hotel?.name || "Hotel";
-
-  container.innerHTML =
-    `<h2 style="padding-left:5%;color:#333;">🏨 Available Rooms at ${hotelName}</h2>` +
-    (offers.length === 0
-      ? `<div class="no-results"><h3>No offers currently available for this hotel.</h3></div>`
-      : offers.map((offer) => {
-          const roomCategory = offer.room?.typeEstimated?.category?.replace(/_/g, " ") || "Standard Room";
-          const roomDesc = offer.room?.description?.text || "A comfortable room for your stay.";
-          const cancelType = offer.policies?.cancellation?.type || offer.policies?.cancellation?.amount ? "Non-refundable" : "Free Cancellation";
-          const boardType = offer.boardType || "Room Only";
-          return `
-          <div class="flight-card">
-              <div class="card-body">
-                  <h3 class="airline-name">🛏️ ${roomCategory}</h3>
-                  <p class="route-subtitle">${roomDesc}</p>
-                  
-                  <div class="flight-info-row">
-                      <span>Cancellation: <b>${cancelType}</b></span>
-                      <span class="duration-pill">${boardType}</span>
-                  </div>
-
-                  <div class="card-footer-row">
-                      <span class="price-tag">${offer.price.total} ${offer.price.currency}</span>
-                      <button class="action-btn" onclick="alert('Offer ID: ${offer.id}\\nRoom: ${roomCategory}\\nPrice: ${offer.price.total} ${offer.price.currency}')">Book Now</button>
-                  </div>
-              </div>
-          </div>`;
-        }).join(""));
+    return `
+    <div class="hotel-card">
+      <div class="hotel-img-wrapper">
+        ${imgUrl
+          ? `<img src="${imgUrl}" alt="${name}" loading="lazy">`
+          : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#003580,#0055bb);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;">🏨</div>`
+        }
+        ${score ? `<div class="hotel-rating-badge">⭐ ${score}</div>` : ""}
+      </div>
+      <div class="card-body">
+        <h3 class="airline-name">${name}</h3>
+        <div class="hotel-stars">${stars}</div>
+        ${reviews ? `<p class="hotel-reviews">${reviews}</p>` : ""}
+        <div class="card-footer-row">
+          <span class="price-tag" data-usd="${hotel.price?.lead?.amount || 0}">${price}<sub>/night</sub></span>
+          <button class="action-btn" onclick="alert('${name.replace(/'/g, "\\'")} — ${price}/night\\n\\nBook directly on the hotel website or via your preferred travel agent.')">View Rooms</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
 }

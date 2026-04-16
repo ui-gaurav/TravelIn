@@ -4,68 +4,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelIn | Flight & Hotels</title>
+    <title>TravelIn | Flights & Hotels</title>
+    <meta name="description" content="View live flight prices and hotel listings for your chosen route on TravelIn.">
     <link rel="icon" type="image/x-icon" href="traveliniconplane.svg">
     <link rel="stylesheet" href="api.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <header class="api-header">
-        <div class="logo">TravelIn</div>
+
+    <!-- ────────── HEADER ────────── -->
+    <header class="api-header" id="api-header">
+        <div class="logo">Travel<span class="logo-accent">In</span></div>
+
+        <!-- Route badge filled by JS -->
+        <div class="route-badge" id="route-badge">Loading…</div>
+
         <div class="api-nav-links">
             <a href="#flight-section" class="nav-jump">✈️ Flights</a>
             <a href="#hotel-section" class="nav-jump">🏨 Hotels</a>
         </div>
-        <a href="home.html" class="back-btn">← Back to Search</a>
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode" title="Toggle theme">
+            <span id="theme-icon">🌙</span>
+        </button>
+        <a href="home.html" class="back-btn">← Back</a>
     </header>
 
+    <!-- ────────── DESTINATION HERO ────────── -->
+    <div class="dest-hero" id="dest-hero">
+        <div class="dest-hero-overlay"></div>
+        <div class="dest-hero-content" id="dest-hero-content">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- ────────── PRICE CALENDAR ────────── -->
+    <div class="price-calendar-section" id="price-calendar-section" style="display:none;">
+        <h3>📅 Price Calendar — Best Fares This Week</h3>
+        <div class="price-calendar-strip" id="price-calendar-strip">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- ────────── TRIP SUMMARY BAR ────────── -->
     <div id="trip-summary" class="summary-bar" style="display: none;">
         <div class="summary-item">
-            <span>Cheapest Flight:</span>
+            <span>Cheapest Flight</span>
             <strong id="min-flight-price">$0</strong>
         </div>
         <div class="summary-item">
-            <span>Avg. Hotel Stay:</span>
+            <span>Avg. Hotel / night</span>
             <strong id="avg-hotel-price">$0</strong>
         </div>
         <div class="total-box">
-            <span>Est. Total Trip:</span>
+            <span>Est. Total Trip</span>
             <strong id="total-trip-cost">$0</strong>
         </div>
-
         <div class="currency-selector">
             <select id="currency-choice" onchange="updateTripTotal()">
                 <option value="USD">USD ($)</option>
                 <option value="INR">INR (₹)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
             </select>
         </div>
+        <button class="share-btn" onclick="shareTrip()" title="Copy shareable link">🔗 Share</button>
     </div>
 
-    <h2 id="flight-section" style="padding-left: 5%; color: #333;">Available Flights</h2>
-    <div id="flight-results-container" class="flight-grid"></div>
+    <!-- ────────── OUTBOUND FLIGHTS ────────── -->
+    <h2 id="flight-section" class="section-title">✈️ Available Flights</h2>
+    <div id="flight-results-container" class="results-grid"></div>
 
-    <h2 id="hotel-section" style="padding-left: 5%; color: #333; margin-top: 50px;">Stays in Your Destination</h2>
-    <div id="hotel-results-container" class="flight-grid"></div>
+    <!-- ────────── RETURN FLIGHTS (round-trip) ────────── -->
+    <div id="return-flight-section" style="display:none;">
+        <h2 class="section-title">↩️ Return Flights</h2>
+        <div id="return-flight-results-container" class="results-grid"></div>
+    </div>
 
-    <div>
-        <div class="footer">
-        <h3>TravelIn</h3>
+    <!-- ────────── HOTELS ────────── -->
+    <h2 id="hotel-section" class="section-title">🏨 Stays in Your Destination</h2>
+    <div id="hotel-results-container" class="results-grid"></div>
 
-        <p class="footer-desc">
-            TravelIn is a travel-inspired project created for learning and
-            demonstration purposes only.
-        </p>
+    <!-- ────────── FOOTER ────────── -->
+    <footer class="api-footer">
+        <div class="footer-content">
+            <h3>Travel<span class="logo-accent">In</span></h3>
+            <p class="footer-desc">Powered by Skyscanner via RapidAPI · Images by Unsplash</p>
+            <p class="footer-disclaimer">
+                © 2026 TravelIn. All rights reserved. For educational purposes only.
+            </p>
         </div>
+    </footer>
 
-        <p class="footer-disclaimer">
-            © 2026 TravelIn. All rights reserved.
-            Images and content used belong to their respective owners and are used for
-            educational purposes only.
-        </p>
-    </div>
+    <script>
+      // ── Theme Toggle ──────────────────────────────────────────
+      (function initTheme() {
+        const saved = localStorage.getItem("travelinTheme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme = saved || (prefersDark ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+        const icon = document.getElementById("theme-icon");
+        if (icon) icon.textContent = theme === "dark" ? "☀️" : "🌙";
+      })();
+
+      function toggleTheme() {
+        const html    = document.documentElement;
+        const current = html.getAttribute("data-theme") || "light";
+        const next    = current === "dark" ? "light" : "dark";
+        html.setAttribute("data-theme", next);
+        localStorage.setItem("travelinTheme", next);
+        const icon = document.getElementById("theme-icon");
+        if (icon) icon.textContent = next === "dark" ? "☀️" : "🌙";
+      }
+    </script>
     <script src="config.js"></script>
     <script src="script.js"></script>
-</body>
 
+</body>
 </html>
