@@ -1,5 +1,5 @@
 # API keys / secrets
-config.js
+# config.js  <-- Commented out so Vercel can pull the file and the site won't crash
 
 # System files
 desktop.ini
