@@ -1,16 +1,10 @@
 let cheapestFlight = 0;
 let averageHotel = 0;
 
-// 1. AUTOMATED TOKEN FETCHING
+// 1. TOKEN FETCHING — delegates to the shared AmadeusToken manager in config.js
+// AmadeusToken caches and auto-refreshes the token every ~29 minutes.
 async function getAccessToken() {
-  const url = "https://test.api.amadeus.com/v1/security/oauth2/token";
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=client_credentials&client_id=${API_KEY}&client_secret=${API_SECRET}`,
-  });
-  const data = await response.json();
-  return data.access_token;
+  return AmadeusToken.get();
 }
 
 // 2. HELPER TO GET URL DATA
@@ -24,10 +18,26 @@ window.onload = async function () {
   const origin = getQueryParam("origin");
   const dest = getQueryParam("dest");
   const date = getQueryParam("date");
+  // destCity is the Amadeus city code (e.g. LON for LHR, NYC for JFK)
+  // Falls back to dest (airport code) if not provided
+  const destCity = getQueryParam("destCity") || dest;
+
+  // Update page titles to show the route
+  if (origin && dest) {
+    const flightTitle = document.getElementById("flight-section");
+    const hotelTitle = document.getElementById("hotel-section");
+    if (flightTitle) flightTitle.textContent = `✈️ Flights: ${origin} → ${dest}`;
+    if (hotelTitle) hotelTitle.textContent = `🏨 Stays in ${dest} (${destCity})`;
+  }
 
   if (origin && dest && date) {
     fetchFlightData(origin, dest, date);
-    fetchHotels(dest);
+    fetchHotels(destCity);
+  } else {
+    const fc = document.getElementById("flight-results-container");
+    const hc = document.getElementById("hotel-results-container");
+    if (fc) fc.innerHTML = `<div class="no-results"><p>No search parameters found. <a href="home.html">← Go back</a></p></div>`;
+    if (hc) hc.innerHTML = "";
   }
 };
 
@@ -72,8 +82,19 @@ async function fetchFlightData(origin, dest, date) {
     });
     const jsonData = await response.json();
 
+    // Check for API-level errors (e.g. invalid airport code)
+    if (jsonData.errors) {
+      const errMsg = jsonData.errors[0]?.detail || "Invalid request parameters.";
+      throw new Error(errMsg);
+    }
+
     if (!jsonData.data || jsonData.data.length === 0) {
-      container.innerHTML = `<div class="no-results"><h3>No flights found.</h3></div>`;
+      container.innerHTML = `
+        <div class="no-results">
+          <h3>✈️ No flights found for this route.</h3>
+          <p style="color:#777;font-size:0.9rem;">Try a different date or check the airport codes are valid (e.g. DEL, LHR, JFK).</p>
+          <a href="home.html">← Change Search</a>
+        </div>`;
       return;
     }
 
@@ -86,49 +107,63 @@ async function fetchFlightData(origin, dest, date) {
 
     renderFlightCards(sortedData, jsonData.dictionaries.carriers);
   } catch (error) {
-    console.error(error);
-    container.innerHTML = "<h3>Error connecting to flight server.</h3>";
+    console.error("Flight fetch error:", error);
+    // On auth errors, clear the token so next request will re-authenticate
+    if (error.message && error.message.includes("401")) AmadeusToken.clear();
+    container.innerHTML = `
+      <div class="no-results" style="text-align:center;padding:40px;">
+        <h3 style="color:#e74c3c;">⚠️ Flight search failed</h3>
+        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
+        <a href="home.html" style="color:#ff7f00;font-weight:600;">← Try again</a>
+      </div>`;
   }
 }
 
 // 6. FETCH HOTEL DATA
 async function fetchHotels(cityCode) {
   const container = document.getElementById("hotel-results-container");
-  container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Searching for stays...</p></div>`;
+  container.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Searching for stays in ${cityCode}...</p></div>`;
 
   try {
     const token = await getAccessToken();
-    const url = `https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode=${cityCode}`;
+    // Use city IATA code (e.g. LON for London, NYC for New York)
+    const url = `https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode=${cityCode}&radius=5&radiusUnit=KM&hotelSource=ALL`;
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.errors?.[0]?.detail || `HTTP ${response.status}`;
+      throw new Error(errMsg);
+    }
+
     const jsonData = await response.json();
 
     if (!jsonData.data || jsonData.data.length === 0) {
-      container.innerHTML = "<p>No hotels found in test database.</p>";
+      container.innerHTML = `
+        <div class="no-results" style="text-align:center;padding:40px;">
+          <p style="font-size:1rem;color:#555;">No hotels found for city code <b>${cityCode}</b>.</p>
+          <p style="font-size:0.85rem;color:#999;">Try a major city like NYC, LON, PAR or DXB.</p>
+        </div>`;
       return;
     }
 
-    // Since Test API doesn't give real prices for city-wide hotel lists,
-    // we simulate an average of $150 to show your calculator works.
+    // Amadeus test API doesn't return live prices for city-wide listing
+    // Use a simulated average price for the trip calculator
     averageHotel = 150.0;
     updateTripTotal();
 
     renderHotelCards(jsonData.data);
-
-    // Inside your fetchHotels try block
-    if (!jsonData.data || jsonData.data.length === 0) {
-      container.innerHTML = `
-        <div class="no-results" style="text-align:center; padding:20px;">
-            <p>No test offers found for this city.</p>
-            <p style="font-size:0.8rem; color:#777;">Tip: Use <b>NYC</b> or <b>LON</b> to see live test prices.</p>
-        </div>`;
-      return;
-    }
   } catch (error) {
-    console.error(error);
-    container.innerHTML = "<p>Error loading hotels.</p>";
+    console.error("Hotel fetch error:", error);
+    container.innerHTML = `
+      <div class="no-results" style="text-align:center;padding:40px;">
+        <h3 style="color:#e74c3c;">⚠️ Hotel data unavailable</h3>
+        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
+        <p style="color:#999;font-size:0.8rem;">The Amadeus test environment has limited city coverage.<br>Try major city codes: NYC, LON, PAR, DXB, SIN.</p>
+      </div>`;
   }
 }
 
@@ -202,45 +237,64 @@ async function fetchHotelOffers(hotelId) {
     });
     const jsonData = await response.json();
 
+    // Check for API-level error response
+    if (jsonData.errors) {
+      const errMsg = jsonData.errors[0]?.detail || "This hotel has no available offers.";
+      throw new Error(errMsg);
+    }
+
     if (!jsonData.data || jsonData.data.length === 0) {
-      container.innerHTML =
-        "<h3>------- No specific offers available for this hotel right now.</h3>";
+      container.innerHTML = `
+        <div class="no-results" style="text-align:center;padding:40px;">
+          <h3>🏨 No rooms available right now</h3>
+          <p style="color:#777;font-size:0.9rem;">This hotel has no live offers in the test environment.<br>Try another hotel from the list.</p>
+          <button class="action-btn" onclick="fetchHotels(getQueryParam('destCity') || getQueryParam('dest'))" style="margin-top:15px;">← Back to Hotels</button>
+        </div>`;
       return;
     }
 
     renderOfferCards(jsonData.data[0]); // Amadeus returns offers inside a hotel object
   } catch (error) {
     console.error("Offer Error:", error);
-    container.innerHTML = "<h3>------- Error fetching room prices.</h3>";
+    container.innerHTML = `
+      <div class="no-results" style="text-align:center;padding:40px;">
+        <h3 style="color:#e74c3c;">⚠️ Room pricing unavailable</h3>
+        <p style="color:#777;font-size:0.9rem;">${error.message}</p>
+        <button class="action-btn" onclick="fetchHotels(getQueryParam('destCity') || getQueryParam('dest'))" style="margin-top:15px;">← Back to Hotels</button>
+      </div>`;
   }
 }
 
 function renderOfferCards(hotelData) {
   const container = document.getElementById("hotel-results-container");
-  const offers = hotelData.offers;
+  const offers = hotelData.offers || [];
+  const hotelName = hotelData.hotel?.name || "Hotel";
 
   container.innerHTML =
-    `<h2>Available Rooms at ${hotelData.hotel.name}</h2>` +
-    offers
-      .map(
-        (offer) => `
-        <div class="flight-card">
-            <div class="card-body">
-                <h3 class="airline-name">🛏️ ${offer.room.typeEstimated.category.replace(/_/g, " ")}</h3>
-                <p class="route-subtitle">${offer.room.description.text}</p>
-                
-                <div class="flight-info-row">
-                    <span>Policy: <b>${offer.policies.cancellation.type || "Standard"}</b></span>
-                    <span class="duration-pill">${offer.boardType || "Room Only"}</span>
-                </div>
+    `<h2 style="padding-left:5%;color:#333;">🏨 Available Rooms at ${hotelName}</h2>` +
+    (offers.length === 0
+      ? `<div class="no-results"><h3>No offers currently available for this hotel.</h3></div>`
+      : offers.map((offer) => {
+          const roomCategory = offer.room?.typeEstimated?.category?.replace(/_/g, " ") || "Standard Room";
+          const roomDesc = offer.room?.description?.text || "A comfortable room for your stay.";
+          const cancelType = offer.policies?.cancellation?.type || offer.policies?.cancellation?.amount ? "Non-refundable" : "Free Cancellation";
+          const boardType = offer.boardType || "Room Only";
+          return `
+          <div class="flight-card">
+              <div class="card-body">
+                  <h3 class="airline-name">🛏️ ${roomCategory}</h3>
+                  <p class="route-subtitle">${roomDesc}</p>
+                  
+                  <div class="flight-info-row">
+                      <span>Cancellation: <b>${cancelType}</b></span>
+                      <span class="duration-pill">${boardType}</span>
+                  </div>
 
-                <div class="card-footer-row">
-                    <span class="price-tag">${offer.price.total} ${offer.price.currency}</span>
-                    <button class="action-btn" onclick="alert('Offer ID: ${offer.id} selected!')">Book Now</button>
-                </div>
-            </div>
-        </div>
-    `,
-      )
-      .join("");
+                  <div class="card-footer-row">
+                      <span class="price-tag">${offer.price.total} ${offer.price.currency}</span>
+                      <button class="action-btn" onclick="alert('Offer ID: ${offer.id}\\nRoom: ${roomCategory}\\nPrice: ${offer.price.total} ${offer.price.currency}')">Book Now</button>
+                  </div>
+              </div>
+          </div>`;
+        }).join(""));
 }

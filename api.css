@@ -33,13 +33,34 @@ body {
   margin: 0;
 }
 
-#flight-results-container {
+#flight-results-container,
+#hotel-results-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 25px;
-  padding: 40px 5%; /* Matches header padding */
+  padding: 40px 5%;
   max-width: 1300px;
   margin: 0 auto;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.no-results h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.no-results a {
+  color: #ff7f00;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* 2. Navigation Header (Fixed Alignment) */
