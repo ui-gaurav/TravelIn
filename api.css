@@ -360,6 +360,20 @@ h2 { scroll-margin-top: 90px; }
   font-family: 'Poppins', sans-serif;
   font-size: 0.85rem;
   backdrop-filter: blur(6px);
+  transition: var(--transition);
+}
+
+.currency-selector select:focus,
+.currency-selector select:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: #fff;
+}
+
+.currency-selector select option {
+  background: var(--navy-dark);
+  color: #fff;
+  font-weight: 600;
+  padding: 8px;
 }
 
 .share-btn {
