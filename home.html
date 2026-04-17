@@ -13,7 +13,6 @@
 
 <body>
 
-    <!-- ────────── NAVBAR ────────── -->
     <header class="navbar" id="navbar">
         <div class="logo">Travel<span class="logo-accent">In</span></div>
         <nav class="nav-links">
@@ -22,21 +21,17 @@
             <a href="#about-us">About</a>
         </nav>
 
-        <!-- Theme Toggle -->
         <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode" title="Toggle theme">
             <span id="theme-icon">🌙</span>
         </button>
 
-        <!-- Search Bar -->
         <div class="search-container" id="search-container">
 
-            <!-- Trip type toggle -->
             <div class="trip-toggle">
                 <button class="trip-btn active" id="btn-oneway" onclick="setTripType('one-way')">One-way</button>
                 <button class="trip-btn" id="btn-round" onclick="setTripType('round-trip')">Round-trip</button>
             </div>
 
-            <!-- Origin -->
             <div class="input-wrapper">
                 <span class="input-icon">🛫</span>
                 <input type="text" id="originInput" placeholder="From (city / airport)" class="search-input" autocomplete="off">
