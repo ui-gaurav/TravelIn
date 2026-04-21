@@ -1,26 +1,11 @@
-// ============================================================
-// TravelIn - Results Page  (Sky Scrapper / RapidAPI)
-// ============================================================
-// Features:
-//  • Outbound + Return (round-trip) flight fetching
-//  • Price calendar strip (7-day cheapest fares)
-//  • Destination hero banner via Unsplash
-//  • Hotel images via Unsplash fallback
-//  • Shimmer skeleton loaders
-//  • Multi-currency trip total
-//  • "Book on Google Flights" links
-//  • Shareable URL
-// ============================================================
 
 let cheapestFlight = 0;
 let averageHotel   = 0;
 
-// ── URL param helper ─────────────────────────────────────────
 function getQueryParam(p) {
   return new URLSearchParams(window.location.search).get(p);
 }
 
-// ── Currency conversion ──────────────────────────────────────
 const RATES   = { USD: 1, INR: 90.58, EUR: 0.93, GBP: 0.79 };
 const SYMBOLS = { USD: "$", INR: "₹", EUR: "€", GBP: "£" };
 
@@ -32,7 +17,7 @@ function updateTripTotal() {
   const currency = currencyEl.value;
   const rate     = RATES[currency]   || 1;
   const symbol   = SYMBOLS[currency] || "$";
-  
+
   if (cheapestFlight > 0 && summaryBar) {
     const fAmt     = cheapestFlight * rate;
     const hAmt     = averageHotel   * rate;
@@ -42,7 +27,6 @@ function updateTripTotal() {
     document.getElementById("total-trip-cost").innerText  = `${symbol}${(fAmt + hAmt).toFixed(0)}`;
   }
 
-  // Update all flight and hotel cards globally
   document.querySelectorAll('.price-tag').forEach(tag => {
      const usd = tag.getAttribute('data-usd');
      if (usd && parseFloat(usd) > 0) {
@@ -52,14 +36,12 @@ function updateTripTotal() {
      }
   });
 
-  // Price calendar strips globally
   document.querySelectorAll('.cal-price').forEach(tag => {
      const usd = tag.getAttribute('data-usd');
      if (usd) tag.innerHTML = `${symbol}${(parseFloat(usd) * rate).toFixed(0)}`;
   });
 }
 
-// ── Share trip link ──────────────────────────────────────────
 function shareTrip() {
   const url = window.location.href;
   if (navigator.clipboard) {
@@ -82,7 +64,6 @@ function showResultToast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ── Skeleton loaders ─────────────────────────────────────────
 function renderSkeletons(containerId, count = 3) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -91,7 +72,6 @@ function renderSkeletons(containerId, count = 3) {
   }</div>`;
 }
 
-// ── Resolve entity IDs ───────────────────────────────────────
 async function resolveEntityId(query) {
   try {
     const res  = await skyScrapper("/api/v1/flights/searchAirport", { query, locale: "en-US" });
@@ -110,14 +90,12 @@ async function resolveEntityId(query) {
   return { skyId: query, entityId: null, hotelEntityId: null };
 }
 
-// ── Destination Hero Banner ───────────────────────────────────
 async function renderDestHero(cityName, origin, dest, date, passengers, tripType) {
   const hero    = document.getElementById("dest-hero");
   const content = document.getElementById("dest-hero-content");
   const badge   = document.getElementById("route-badge");
   if (!hero || !content) return;
 
-  // Route badge
   const paxLabel = passengers > 1 ? `${passengers} Pax` : "1 Pax";
   const rtLabel  = tripType === "round-trip" ? "Round-trip" : "One-way";
   if (badge) badge.textContent = `${origin} → ${dest} · ${formatDisplayDate(date)} · ${paxLabel} · ${rtLabel}`;
@@ -128,16 +106,13 @@ async function renderDestHero(cityName, origin, dest, date, passengers, tripType
     <div id="weather-badge" style="margin-top:12px; font-weight:500; font-size:0.95rem; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:rgba(0,0,0,0.6); border-radius:30px; backdrop-filter:blur(6px); color:#fff; border:1px solid rgba(255,255,255,0.2);">Fetching weather... ⛅</div>
   `;
 
-  // Fetch Weather asynchronously
   fetchWeather(cityName).then(data => {
     const targetDate = new Date(date).toISOString().split('T')[0];
     const forecasts = data.list || [];
-    
-    // Find closest forecast for the selected date (defaulting to 12:00 PM if possible)
+
     let matched = forecasts.find(f => f.dt_txt.startsWith(targetDate) && f.dt_txt.includes("12:00"));
     if (!matched) matched = forecasts.find(f => f.dt_txt.startsWith(targetDate));
-    
-    // If date is too far (>5 days), fall back to the very first available forecast (current)
+
     if (!matched) matched = forecasts[0];
 
     if (matched) {
@@ -146,7 +121,7 @@ async function renderDestHero(cityName, origin, dest, date, passengers, tripType
        const temp = Math.round(matched.main.temp);
        const isExactDate = matched.dt_txt.startsWith(targetDate);
        const datePrefix = isExactDate ? "" : "Current: ";
-       
+
        document.getElementById("weather-badge").innerHTML = `
          <img src="https://openweathermap.org/img/wn/${icon}.png" style="width:24px;height:24px;margin-left:-6px;" alt="${condition}">
          <span>${datePrefix}${temp}°C, ${condition}</span>
@@ -157,7 +132,6 @@ async function renderDestHero(cityName, origin, dest, date, passengers, tripType
      console.error("Weather error:", e);
   });
 
-  // Load Unsplash photo as hero background
   const photoUrl = await getDestinationPhoto(`${cityName} travel landmark`, 1400);
   if (photoUrl) {
     const img    = document.createElement("img");
@@ -176,7 +150,6 @@ function formatDisplayDate(dateStr) {
   return d.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" });
 }
 
-// ── Price Calendar Strip ──────────────────────────────────────
 async function renderPriceCalendar(originSkyId, originEntityId, destSkyId, destEntityId, activeDate) {
   const section = document.getElementById("price-calendar-section");
   const strip   = document.getElementById("price-calendar-strip");
@@ -193,7 +166,6 @@ async function renderPriceCalendar(originSkyId, originEntityId, destSkyId, destE
     const days = json.data?.flights?.days;
     if (!days || days.length === 0) return;
 
-    // Show 7 days around the selected date
     const activeDateObj  = new Date(activeDate);
     const nearbyDays     = days
       .filter(d => {
@@ -231,10 +203,6 @@ function navigateToDate(newDate) {
   window.location.search = params.toString();
 }
 
-// ════════════════════════════════════════════════════════════════
-// PAGE INIT
-// ════════════════════════════════════════════════════════════════
-
 window.onload = async function () {
   const origin     = getQueryParam("origin");
   const dest       = getQueryParam("dest");
@@ -252,16 +220,13 @@ window.onload = async function () {
   let destEntityId      = getQueryParam("destEntityId")       || "";
   let destHotelEntityId = getQueryParam("destHotelEntityId") || "";
 
-  // Section titles
   const flightTitle = document.getElementById("flight-section");
   const hotelTitle  = document.getElementById("hotel-section");
   if (flightTitle) flightTitle.textContent = `✈️ Flights: ${originName} → ${destName}`;
   if (hotelTitle)  hotelTitle.textContent  = `🏨 Hotels in ${destName}`;
 
-  // Map sky code to city name for display
   const cityName = destName;
 
-  // Destination hero
   renderDestHero(cityName, origin, dest, date, passengers, tripType);
 
   if (!origin || !dest || !date) {
@@ -270,11 +235,9 @@ window.onload = async function () {
     return;
   }
 
-  // Show skeletons
   renderSkeletons("flight-results-container", 3);
   renderSkeletons("hotel-results-container", 3);
 
-  // Resolve entity IDs if missing
   if (!originEntityId || !destEntityId) {
     const [oData, dData] = await Promise.all([
       !originEntityId ? resolveEntityId(origin) : Promise.resolve({ skyId: originSkyId, entityId: originEntityId }),
@@ -284,10 +247,8 @@ window.onload = async function () {
     if (!destEntityId)   { destSkyId   = dData.skyId; destEntityId   = dData.entityId; destHotelEntityId = dData.hotelEntityId || dData.entityId; }
   }
 
-  // Price calendar
   renderPriceCalendar(originSkyId, originEntityId, destSkyId, destEntityId, date);
 
-  // Round-trip: show return section
   if (tripType === "round-trip" && returnDate) {
     const returnSection = document.getElementById("return-flight-section");
     if (returnSection) {
@@ -298,7 +259,6 @@ window.onload = async function () {
     }
   }
 
-  // Parallel data fetching
   const fetches = [
     fetchFlightData(originSkyId, originEntityId, destSkyId, destEntityId, date, passengers),
     fetchHotels(destHotelEntityId || destEntityId, dest, date, cityName),
@@ -313,9 +273,6 @@ window.onload = async function () {
   await Promise.all(fetches);
 };
 
-// ════════════════════════════════════════════════════════════════
-// 1. FETCH FLIGHTS
-// ════════════════════════════════════════════════════════════════
 async function fetchFlightData(originSkyId, originEntityId, destSkyId, destEntityId, date, passengers = 1, isReturn = false) {
   const containerId = isReturn ? "return-flight-results-container" : "flight-results-container";
   const container   = document.getElementById(containerId);
@@ -326,7 +283,7 @@ async function fetchFlightData(originSkyId, originEntityId, destSkyId, destEntit
       departure_id: originSkyId,
       arrival_id: destSkyId,
       outbound_date: date,
-      type: "2", // 2 = One-way (since we fetch outbound and return separately)
+      type: "2",
       currency: "USD",
       hl: "en",
       adults: String(passengers)
@@ -350,9 +307,9 @@ async function fetchFlightData(originSkyId, originEntityId, destSkyId, destEntit
       const flightLegs = offer.flights || [];
       const first = flightLegs[0] || {};
       const last = flightLegs[flightLegs.length - 1] || {};
-      
+
       const priceRaw = offer.price || 0;
-      
+
       return {
         price: { raw: priceRaw, formatted: `$${priceRaw}` },
         legs: [{
@@ -387,10 +344,6 @@ async function fetchFlightData(originSkyId, originEntityId, destSkyId, destEntit
   }
 }
 
-
-// ════════════════════════════════════════════════════════════════
-// 2. FETCH HOTELS
-// ════════════════════════════════════════════════════════════════
 async function fetchHotels(hotelEntityId, cityName, checkinDate, displayCity) {
   const container = document.getElementById("hotel-results-container");
   if (!container) return;
@@ -401,7 +354,6 @@ async function fetchHotels(hotelEntityId, cityName, checkinDate, displayCity) {
     return d.toISOString().split("T")[0];
   })();
 
-  // Use "Airport" suffix exclusively so Google Hotels centres precisely on the destination city instead of matching random states (e.g., DEL = Delaware)
   const destCity = `${getQueryParam("dest")} Airport`;
 
   try {
@@ -413,12 +365,12 @@ async function fetchHotels(hotelEntityId, cityName, checkinDate, displayCity) {
       hl: "en",
       adults: "1"
     });
-    
+
     if (!res.ok) throw new Error("Could not find hotels for this city.");
-    
+
     const json = await res.json();
     const hotelList = json.properties || [];
-    
+
     if (hotelList.length === 0) {
       container.innerHTML = `
         <div class="no-results">
@@ -460,11 +412,6 @@ async function fetchHotels(hotelEntityId, cityName, checkinDate, displayCity) {
   }
 }
 
-
-
-// ════════════════════════════════════════════════════════════════
-// 3. RENDER — Flight Cards
-// ════════════════════════════════════════════════════════════════
 function renderFlightCards(itineraries, containerId, destSkyId, destEntityId, originSkyId, originEntityId, date) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -488,7 +435,6 @@ function renderFlightCards(itineraries, containerId, destSkyId, destEntityId, or
     const price    = flight.price?.formatted || `$${(flight.price?.raw || 0).toFixed(0)}`;
     const priceRaw = flight.price?.raw || 0;
 
-    // Google Flights deep link
     const gFlightsUrl = `https://www.google.com/travel/flights/search?tfs=CBwQAhoeEgoyMDI2LTA0LTE2agwIAhIIL20vMDJtNzNyDAgCEggvbS8wMm03Mw`;
 
     return `
@@ -525,14 +471,10 @@ function renderFlightCards(itineraries, containerId, destSkyId, destEntityId, or
   }).join("");
 }
 
-// ════════════════════════════════════════════════════════════════
-// 4. RENDER — Hotel Cards (with Unsplash fallback)
-// ════════════════════════════════════════════════════════════════
 async function renderHotelCards(hotels, cityName) {
   const container = document.getElementById("hotel-results-container");
   if (!container) return;
 
-  // Fetch Unsplash fallback images for hotels that have no API image
   const hotelImages = await Promise.all(hotels.map(async (hotel) => {
     const apiImg = hotel.images?.[0]?.url;
     if (apiImg) return apiImg;

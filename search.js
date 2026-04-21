@@ -1,13 +1,6 @@
-// ============================================================
-// TravelIn - Search & Autocomplete Module  (Sky Scrapper API)
-// ============================================================
-// Supports: One-way & Round-trip, Passengers, Swap button,
-// Live Unsplash photos on discover cards, Popular route chips
-// ============================================================
 
-// ── Local fallback airport database ──────────────────────────
 const LOCAL_AIRPORTS = [
-  // India
+
   { skyId: "DEL", entityId: "95673567", hotelEntityId: "27536952", name: "Indira Gandhi International", cityName: "New Delhi",   countryName: "India" },
   { skyId: "BOM", entityId: "95673330", hotelEntityId: "27537118", name: "Chhatrapati Shivaji International", cityName: "Mumbai", countryName: "India" },
   { skyId: "MAA", entityId: "95673625", hotelEntityId: "27537045", name: "Chennai International",          cityName: "Chennai",   countryName: "India" },
@@ -20,11 +13,11 @@ const LOCAL_AIRPORTS = [
   { skyId: "PNQ", entityId: "95673619", hotelEntityId: "27537212", name: "Pune Airport",                   cityName: "Pune",      countryName: "India" },
   { skyId: "JAI", entityId: "95673497", hotelEntityId: "27537057", name: "Jaipur International",           cityName: "Jaipur",    countryName: "India" },
   { skyId: "LKO", entityId: "95673540", hotelEntityId: "27537202", name: "Chaudhary Charan Singh Intl",   cityName: "Lucknow",   countryName: "India" },
-  // Middle East
+
   { skyId: "DXB", entityId: "95673643", hotelEntityId: "27537102", name: "Dubai International",            cityName: "Dubai",     countryName: "UAE" },
   { skyId: "AUH", entityId: "95673318", hotelEntityId: "27536788", name: "Abu Dhabi International",        cityName: "Abu Dhabi", countryName: "UAE" },
   { skyId: "DOH", entityId: "95673388", hotelEntityId: "27536915", name: "Hamad International",            cityName: "Doha",      countryName: "Qatar" },
-  // Europe
+
   { skyId: "LHR", entityId: "95565050", hotelEntityId: "27544008", name: "London Heathrow",                cityName: "London",    countryName: "United Kingdom" },
   { skyId: "CDG", entityId: "95565041", hotelEntityId: "27539733", name: "Charles de Gaulle",              cityName: "Paris",     countryName: "France" },
   { skyId: "FRA", entityId: "95565049", hotelEntityId: "27537456", name: "Frankfurt Airport",              cityName: "Frankfurt", countryName: "Germany" },
@@ -34,7 +27,7 @@ const LOCAL_AIRPORTS = [
   { skyId: "FCO", entityId: "95565048", hotelEntityId: "27537455", name: "Leonardo da Vinci International",cityName: "Rome",      countryName: "Italy" },
   { skyId: "IST", entityId: "95565063", hotelEntityId: "27537462", name: "Istanbul Airport",               cityName: "Istanbul",  countryName: "Turkey" },
   { skyId: "ATH", entityId: "95565040", hotelEntityId: "27537453", name: "Athens International",           cityName: "Athens",    countryName: "Greece" },
-  // Asia-Pacific
+
   { skyId: "SIN", entityId: "95673768", hotelEntityId: "27537192", name: "Singapore Changi",               cityName: "Singapore", countryName: "Singapore" },
   { skyId: "BKK", entityId: "95673326", hotelEntityId: "27537116", name: "Suvarnabhumi Airport",           cityName: "Bangkok",   countryName: "Thailand" },
   { skyId: "KUL", entityId: "95673527", hotelEntityId: "27537067", name: "Kuala Lumpur International",     cityName: "Kuala Lumpur", countryName: "Malaysia" },
@@ -45,18 +38,17 @@ const LOCAL_AIRPORTS = [
   { skyId: "MEL", entityId: "95673577", hotelEntityId: "27537139", name: "Melbourne Airport",              cityName: "Melbourne", countryName: "Australia" },
   { skyId: "MLE", entityId: "95673586", hotelEntityId: "27537145", name: "Velana International",           cityName: "Malé",      countryName: "Maldives" },
   { skyId: "CMB", entityId: "95673352", hotelEntityId: "27537161", name: "Bandaranaike International",     cityName: "Colombo",   countryName: "Sri Lanka" },
-  // Americas
+
   { skyId: "JFK", entityId: "95565058", hotelEntityId: "27537457", name: "John F. Kennedy International",  cityName: "New York",  countryName: "United States" },
   { skyId: "LAX", entityId: "95565060", hotelEntityId: "27537460", name: "Los Angeles International",      cityName: "Los Angeles", countryName: "United States" },
   { skyId: "ORD", entityId: "95565066", hotelEntityId: "27537461", name: "O'Hare International",           cityName: "Chicago",   countryName: "United States" },
   { skyId: "SFO", entityId: "95565069", hotelEntityId: "27537463", name: "San Francisco International",    cityName: "San Francisco", countryName: "United States" },
   { skyId: "MIA", entityId: "95565064", hotelEntityId: "27537464", name: "Miami International",            cityName: "Miami",     countryName: "United States" },
-  // Africa
+
   { skyId: "CAI", entityId: "95673344", hotelEntityId: "27536953", name: "Cairo International",            cityName: "Cairo",     countryName: "Egypt" },
   { skyId: "JNB", entityId: "95673503", hotelEntityId: "27537061", name: "O.R. Tambo International",       cityName: "Johannesburg", countryName: "South Africa" },
 ];
 
-// ── DISCOVER card data ────────────────────────────────────────
 const DISCOVER_DESTINATIONS = [
   { skyId: "DXB", entityId: "95673643", hotelEntityId: "27537102", cityName: "Dubai",     countryName: "UAE",          price: "$240", query: "Dubai skyline" },
   { skyId: "ATH", entityId: "95565040", hotelEntityId: "27537453", cityName: "Athens",    countryName: "Greece",       price: "$310", query: "Athens Acropolis" },
@@ -68,7 +60,6 @@ const DISCOVER_DESTINATIONS = [
   { skyId: "FCO", entityId: "95565048", hotelEntityId: "27537455", cityName: "Rome",      countryName: "Italy",        price: "$360", query: "Rome Colosseum" },
 ];
 
-// ── POPULAR ROUTES ────────────────────────────────────────────
 const POPULAR_ROUTES = [
   { from: "DEL", fromName: "Delhi",     fromEntityId: "95673567", fromHotelEntityId: "27536952",
     to:   "DXB", toName:   "Dubai",     toEntityId:   "95673643", toHotelEntityId:   "27537102", price: "$240" },
@@ -84,7 +75,6 @@ const POPULAR_ROUTES = [
     to:   "CDG", toName:   "Paris",     toEntityId:   "95565041", toHotelEntityId:   "27539733", price: "$580" },
 ];
 
-// ── Trip-type State ───────────────────────────────────────────
 let currentTripType = "one-way";
 
 function setTripType(type) {
@@ -103,7 +93,6 @@ function setTripType(type) {
   }
 }
 
-// ── Swap origin <-> destination ───────────────────────────────
 function swapLocations() {
   const originInput = document.getElementById("originInput");
   const destInput   = document.getElementById("destInput");
@@ -114,15 +103,13 @@ function swapLocations() {
   const dEntityId   = document.getElementById("destEntityId");
   const dHotelId    = document.getElementById("destHotelEntityId");
 
-  // Swap visible text
   [originInput.value, destInput.value] = [destInput.value, originInput.value];
-  // Swap hidden IDs
+
   [oSkyId.value,    dSkyId.value]    = [dSkyId.value,    oSkyId.value];
   [oEntityId.value, dEntityId.value] = [dEntityId.value, oEntityId.value];
   [oHotelId.value,  dHotelId.value]  = [dHotelId.value,  oHotelId.value];
 }
 
-// ── Local airport search fallback ─────────────────────────────
 function searchLocalAirports(query) {
   const q = query.toLowerCase();
   return LOCAL_AIRPORTS.filter(a =>
@@ -133,7 +120,6 @@ function searchLocalAirports(query) {
   ).slice(0, 6);
 }
 
-// ── Live city/airport suggestions via Sky Scrapper ────────────
 async function getCitySuggestions(query) {
   if (query.length < 2) return [];
   try {
@@ -156,7 +142,6 @@ async function getCitySuggestions(query) {
   return searchLocalAirports(query);
 }
 
-// ── Date setup ────────────────────────────────────────────────
 const today = new Date().toISOString().split("T")[0];
 const dateInput = document.getElementById("dateInput");
 const returnDateInput = document.getElementById("returnDateInput");
@@ -168,7 +153,6 @@ if (returnDateInput) {
   returnDateInput.value = tomorrow.toISOString().split("T")[0];
 }
 
-// ── Hidden entity-ID fields ───────────────────────────────────
 function ensureHiddenInputs() {
   ["originSkyId","originEntityId","originHotelEntityId","destSkyId","destEntityId","destHotelEntityId"]
     .forEach(id => {
@@ -181,7 +165,6 @@ function ensureHiddenInputs() {
 }
 ensureHiddenInputs();
 
-// ── Autocomplete factory ──────────────────────────────────────
 function setupAutocomplete(inputId, resultsId, skyIdField, entityIdField, hotelEntityIdField) {
   const input    = document.getElementById(inputId);
   const dropdown = document.getElementById(resultsId);
@@ -226,7 +209,6 @@ function setupAutocomplete(inputId, resultsId, skyIdField, entityIdField, hotelE
 setupAutocomplete("originInput", "origin-results", "originSkyId", "originEntityId", "originHotelEntityId");
 setupAutocomplete("destInput", "dest-results", "destSkyId", "destEntityId", "destHotelEntityId");
 
-// ── Show toast notification ────────────────────────────────────
 function showToast(msg, type = "warn") {
   const existing = document.getElementById("travelin-toast");
   if (existing) existing.remove();
@@ -245,7 +227,6 @@ function showToast(msg, type = "warn") {
   setTimeout(() => toast.remove(), 3500);
 }
 
-// ── Search handler ────────────────────────────────────────────
 function handleSearch() {
   const originVal = document.getElementById("originInput").value.trim();
   const destVal   = document.getElementById("destInput").value.trim();
@@ -258,7 +239,6 @@ function handleSearch() {
     return;
   }
 
-  // Extract just the sky ID from "DEL — New Delhi" format or plain text
   const originMatch = originVal.split(" ");
   const origin = (document.getElementById("originSkyId").value || originMatch[0]).toUpperCase();
   const originName = originVal.includes("—") ? originVal.split("—")[1].trim() : origin;
@@ -286,7 +266,6 @@ function handleSearch() {
   window.location.href = `api.html?${params.toString()}`;
 }
 
-// ── Pre-fill search from popular route chip ───────────────────
 function quickSearch(route) {
   const originInput = document.getElementById("originInput");
   const destInput   = document.getElementById("destInput");
@@ -298,15 +277,14 @@ function quickSearch(route) {
   document.getElementById("destSkyId").value           = route.to;
   document.getElementById("destEntityId").value        = route.toEntityId;
   document.getElementById("destHotelEntityId").value   = route.toHotelEntityId;
-  // Scroll to search
+
   document.getElementById("search-container")?.scrollIntoView({ behavior: "smooth" });
 }
 
-// ── Pre-fill search from discover card ───────────────────────
 function quickSearchDest(dest) {
   const originSkyEl  = document.getElementById("originSkyId");
   const originEl     = document.getElementById("originInput");
-  // Use whatever origin is currently set, or default to DEL
+
   const fromSkyId    = originSkyEl?.value || "DEL";
   const fromEntityId = document.getElementById("originEntityId")?.value || "95673567";
   const fromHotelId  = document.getElementById("originHotelEntityId")?.value || "27536952";
@@ -322,7 +300,6 @@ function quickSearchDest(dest) {
   handleSearch();
 }
 
-// ── Render popular routes ─────────────────────────────────────
 function renderPopularRoutes() {
   const row = document.getElementById("routes-row");
   if (!row) return;
@@ -334,12 +311,10 @@ function renderPopularRoutes() {
   `).join("");
 }
 
-// ── Render discover cards with Unsplash photos ────────────────
 async function renderDiscoverCards() {
   const container = document.getElementById("discover-cards");
   if (!container) return;
 
-  // Fetch all photos in parallel
   const photos = await Promise.all(
     DISCOVER_DESTINATIONS.map(d => getDestinationPhoto(d.query, 600))
   );
@@ -367,6 +342,5 @@ async function renderDiscoverCards() {
   }).join("");
 }
 
-// ── Init on page load ─────────────────────────────────────────
 renderPopularRoutes();
 renderDiscoverCards();

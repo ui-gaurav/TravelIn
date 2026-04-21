@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════════════════
-   TravelIn — Results Page CSS (api.css)
-   Premium Dark-Accent Design System
-   ═══════════════════════════════════════════════════════ */
+
 
 :root {
   --orange: #FF7300;
@@ -24,7 +21,7 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Dark Mode — system preference ── */
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f0f1a;
@@ -36,7 +33,7 @@
   }
 }
 
-/* ── Manual dark/light overrides ── */
+
 [data-theme="dark"] {
   --bg: #0f0f1a;
   --surface: #1a1a2e;
@@ -55,7 +52,7 @@
   --border: rgba(0,0,0,0.07);
 }
 
-/* ── Theme Toggle Button ── */
+
 .theme-toggle {
   background: var(--surface);
   border: 1.5px solid var(--border);
@@ -78,7 +75,7 @@
 
 
 
-/* ── Reset ── */
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
@@ -92,9 +89,7 @@ body {
 
 h2 { scroll-margin-top: 90px; }
 
-/* ─────────────────────────────────────────────
-   HEADER
-   ───────────────────────────────────────────── */
+
 
 .api-header {
   display: flex;
@@ -173,9 +168,7 @@ h2 { scroll-margin-top: 90px; }
   color: white;
 }
 
-/* ─────────────────────────────────────────────
-   DESTINATION HERO BANNER
-   ───────────────────────────────────────────── */
+
 
 .dest-hero {
   position: relative;
@@ -229,9 +222,7 @@ h2 { scroll-margin-top: 90px; }
   font-size: 0.95rem;
 }
 
-/* ─────────────────────────────────────────────
-   PRICE CALENDAR STRIP
-   ───────────────────────────────────────────── */
+
 
 .price-calendar-section {
   padding: 28px 5%;
@@ -302,9 +293,7 @@ h2 { scroll-margin-top: 90px; }
 .cal-day.active .cal-price.cheapest,
 .cal-day:hover .cal-price.cheapest { color: #fff; }
 
-/* ─────────────────────────────────────────────
-   TRIP SUMMARY BAR
-   ───────────────────────────────────────────── */
+
 
 .summary-bar {
   background: linear-gradient(135deg, var(--navy) 0%, #0055bb 100%);
@@ -393,9 +382,7 @@ h2 { scroll-margin-top: 90px; }
   background: rgba(255,255,255,0.28);
 }
 
-/* ─────────────────────────────────────────────
-   SECTION TITLES
-   ───────────────────────────────────────────── */
+
 
 .section-title {
   padding: 0 5%;
@@ -405,9 +392,7 @@ h2 { scroll-margin-top: 90px; }
   margin: 44px 0 0;
 }
 
-/* ─────────────────────────────────────────────
-   RESULTS GRID
-   ───────────────────────────────────────────── */
+
 
 .results-grid {
   display: grid;
@@ -418,9 +403,7 @@ h2 { scroll-margin-top: 90px; }
   margin: 0 auto;
 }
 
-/* ─────────────────────────────────────────────
-   SKELETON LOADERS (Shimmer)
-   ───────────────────────────────────────────── */
+
 
 .skeleton {
   background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
@@ -446,9 +429,7 @@ h2 { scroll-margin-top: 90px; }
   gap: 22px;
 }
 
-/* ─────────────────────────────────────────────
-   FLIGHT CARD
-   ───────────────────────────────────────────── */
+
 
 .flight-card {
   background: var(--surface);
@@ -511,7 +492,7 @@ h2 { scroll-margin-top: 90px; }
   margin-bottom: 16px;
 }
 
-/* Timeline row */
+
 .flight-timeline {
   display: flex;
   align-items: center;
@@ -594,7 +575,7 @@ h2 { scroll-margin-top: 90px; }
   color: #16a34a;
 }
 
-/* Card Footer */
+
 .card-footer-row {
   display: flex;
   justify-content: space-between;
@@ -641,9 +622,7 @@ h2 { scroll-margin-top: 90px; }
   box-shadow: 0 6px 20px rgba(0,53,128,0.3);
 }
 
-/* ─────────────────────────────────────────────
-   HOTEL CARD
-   ───────────────────────────────────────────── */
+
 
 .hotel-card {
   background: var(--surface);
@@ -704,9 +683,7 @@ h2 { scroll-margin-top: 90px; }
   margin-bottom: 12px;
 }
 
-/* ─────────────────────────────────────────────
-   NO RESULTS & ERROR STATES
-   ───────────────────────────────────────────── */
+
 
 .no-results {
   grid-column: 1 / -1;
@@ -745,9 +722,7 @@ h2 { scroll-margin-top: 90px; }
   transform: scale(1.03);
 }
 
-/* ─────────────────────────────────────────────
-   FOOTER
-   ───────────────────────────────────────────── */
+
 
 .api-footer {
   background: var(--surface);

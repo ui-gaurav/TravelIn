@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Allow OPTIONS methods for CORS
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     });
 
     const data = await fetchRes.json();
-    
+
     res.status(fetchRes.status).json(data);
   } catch (error) {
     console.error("Vercel Proxy Error:", error);

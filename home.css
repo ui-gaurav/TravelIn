@@ -1,9 +1,6 @@
-/* ═══════════════════════════════════════════════════════
-   TravelIn — Home Page CSS
-   Premium 2026 Design: Glassmorphism, Animated Hero, Dark Mode
-   ═══════════════════════════════════════════════════════ */
 
-/* ── Google Fonts + CSS Variables ── */
+
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap');
 
 :root {
@@ -25,7 +22,7 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Dark Mode — system preference ── */
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f0f1a;
@@ -38,7 +35,7 @@
   }
 }
 
-/* ── Manual dark/light overrides (overrule system preference) ── */
+
 [data-theme="dark"] {
   --bg: #0f0f1a;
   --surface: #1a1a2e;
@@ -59,7 +56,7 @@
   --shadow-md: 0 10px 30px rgba(0,0,0,0.10);
 }
 
-/* ── Theme Toggle Button ── */
+
 .theme-toggle {
   background: var(--surface);
   border: 1.5px solid var(--border);
@@ -82,7 +79,7 @@
 }
 
 
-/* ── Reset ── */
+
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -101,9 +98,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ═══════════════════════════════════════════════════════
-   NAVBAR — Glassmorphism
-   ═══════════════════════════════════════════════════════ */
+
 
 .navbar {
   display: flex;
@@ -160,7 +155,7 @@ body {
   background: var(--orange-glow);
 }
 
-/* ── Search Container ── */
+
 .search-container {
   display: flex;
   align-items: center;
@@ -174,7 +169,7 @@ body {
   max-width: fit-content;
 }
 
-/* Trip type toggle */
+
 .trip-toggle {
   display: flex;
   gap: 2px;
@@ -229,7 +224,7 @@ body {
 .date-input { width: 130px; }
 .passengers-input { width: 50px; text-align: center; }
 
-/* Swap Button */
+
 .swap-btn {
   background: var(--bg);
   border: 1.5px solid var(--border);
@@ -258,7 +253,7 @@ body {
   align-items: center;
 }
 
-/* Search Submit Button */
+
 .search-btn {
   background: var(--orange);
   border: none;
@@ -280,7 +275,7 @@ body {
   box-shadow: 0 4px 16px var(--orange-glow);
 }
 
-/* Autocomplete Dropdown */
+
 .autocomplete-items {
   position: absolute;
   border: 1px solid var(--border);
@@ -311,9 +306,7 @@ body {
   color: var(--orange);
 }
 
-/* ═══════════════════════════════════════════════════════
-   HERO SECTION
-   ═══════════════════════════════════════════════════════ */
+
 
 .hero {
   display: flex;
@@ -326,7 +319,7 @@ body {
   overflow: hidden;
 }
 
-/* Floating animated orbs */
+
 .orb {
   position: absolute;
   border-radius: 50%;
@@ -362,7 +355,7 @@ body {
   50% { transform: translateY(-30px) scale(1.05); }
 }
 
-/* Hero Badge */
+
 .hero-badge {
   display: inline-block;
   background: linear-gradient(135deg, var(--orange-glow), rgba(255,183,3,0.2));
@@ -376,7 +369,7 @@ body {
   backdrop-filter: blur(10px);
 }
 
-/* Hero Text */
+
 .hero-text {
   width: 45%;
   position: relative;
@@ -416,7 +409,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Stats */
+
 .stats {
   display: flex;
   gap: 40px;
@@ -435,7 +428,7 @@ body {
   margin: 0;
 }
 
-/* Inline Elements (hero h1) */
+
 .inline-elements {
   display: inline-flex;
   align-items: center;
@@ -443,7 +436,7 @@ body {
   vertical-align: middle;
 }
 
-/* Orange pill/leaf button */
+
 .exact-shape-button {
   display: inline-flex;
   align-items: center;
@@ -471,7 +464,7 @@ body {
   font-size: 26px;
 }
 
-/* Mini round icon */
+
 .mini-round {
   width: 65px;
   height: 65px;
@@ -481,7 +474,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* Hero Circle */
+
 .hero-circle {
   width: 55%;
   display: flex;
@@ -537,9 +530,7 @@ body {
   to   { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════
-   POPULAR ROUTES STRIP
-   ═══════════════════════════════════════════════════════ */
+
 
 .popular-routes {
   padding: 40px 80px;
@@ -601,9 +592,7 @@ body {
   color: #fff;
 }
 
-/* ═══════════════════════════════════════════════════════
-   DISCOVER SECTION
-   ═══════════════════════════════════════════════════════ */
+
 
 .discover {
   padding: 80px 80px;
@@ -630,7 +619,7 @@ body {
   gap: 28px;
 }
 
-/* Skeleton Cards */
+
 .skeleton-card {
   height: 320px;
   background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
@@ -644,7 +633,7 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* Real Cards */
+
 .card {
   background: var(--surface);
   border-radius: var(--radius-md);
@@ -730,9 +719,7 @@ body {
   transform: scale(1.03);
 }
 
-/* ═══════════════════════════════════════════════════════
-   FEATURES SECTION
-   ═══════════════════════════════════════════════════════ */
+
 
 .features {
   padding: 80px 8%;
@@ -801,9 +788,7 @@ body {
   color: var(--text-muted);
 }
 
-/* ═══════════════════════════════════════════════════════
-   ABOUT SECTION
-   ═══════════════════════════════════════════════════════ */
+
 
 .about {
   padding: 80px 10%;
@@ -859,9 +844,7 @@ body {
   line-height: 1.65;
 }
 
-/* ═══════════════════════════════════════════════════════
-   FOOTER
-   ═══════════════════════════════════════════════════════ */
+
 
 .footer {
   background: var(--surface);
@@ -909,9 +892,7 @@ body {
   margin-top: 8px;
 }
 
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════ */
+
 
 @media (max-width: 1024px) {
   .navbar { padding: 16px 30px; }

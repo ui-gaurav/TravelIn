@@ -12,7 +12,6 @@ http.createServer((req, res) => {
     return;
   }
 
-  // Expect URL form: /?url=https://target.com
   const searchParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
   const targetUrlStr = searchParams.get('url');
 
@@ -23,12 +22,11 @@ http.createServer((req, res) => {
   }
 
   https.get(targetUrlStr, { headers: { 'User-Agent': 'TravelIn-Local-Proxy/1.0' } }, (apiRes) => {
-    // Strip headers that interfere with local proxying
+
     delete apiRes.headers['access-control-allow-origin'];
     delete apiRes.headers['content-security-policy'];
     delete apiRes.headers['x-frame-options'];
-    
-    // Copy remaining headers from SerpApi
+
     Object.keys(apiRes.headers).forEach(key => {
       res.setHeader(key, apiRes.headers[key]);
     });
