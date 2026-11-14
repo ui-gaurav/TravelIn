@@ -248,3 +248,7 @@ DOM updated dynamically with real results
 *"Built for learning. Deployed like production."*
 
 </div>
+
+## License
+
+MIT © 2026 Gaurav Arya. See [LICENSE](LICENSE).
